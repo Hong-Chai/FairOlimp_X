@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FairOlymp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('main.organizer_dashboard') }}">Организатор</a>
+        <a href="{{ url_for('main.logout') }}">Выйти из всех аккаунтов</a>
+    </nav>
+    {% block content %}{% endblock %}
+</body>
+</html>

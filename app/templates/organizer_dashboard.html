@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Личный кабинет организатора</h1>
+
+<div class="section">
+    <h2>Ссылка для участников:</h2>
+    <input type="text" value="{{ custom_link }}" readonly>
+</div>
+
+<div class="section">
+    <h2>Настройки олимпиады</h2>
+    <form method="POST" action="{{ url_for('main.olympiad_settings') }}">
+        {{ form.hidden_tag() }}
+        {{ form.name.label }} {{ form.name() }}<br>
+        {{ form.subject.label }} {{ form.subject() }}<br>
+        {{ form.level.label }} {{ form.level() }}<br>
+        {{ form.grades.label }} {{ form.grades() }}<br>
+        <input type="submit" value="Сохранить">
+    </form>
+</div>
+
+<div class="section">
+    <h2>Участники ({{ participants|length }})</h2>
+    <table>
+        <tr>
+            <th>Код</th>
+            <th>Класс</th>
+        </tr>
+        {% for participant in participants %}
+        <tr>
+            <td>{{ participant.participant_code }}</td>
+            <td>{{ participant.grade }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
