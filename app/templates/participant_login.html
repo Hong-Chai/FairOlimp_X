@@ -1,0 +1,30 @@
+{% extends "participant_base.html" %}
+
+{% block content %}
+    <h2>Вход для участника</h2>
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        
+        <div class="form-group">
+            {{ form.email.label }}
+            {{ form.email(class="form-control") }}
+            {% for error in form.email.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.password.label }}
+            {{ form.password(class="form-control") }}
+            {% for error in form.password.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.submit(class="btn") }}
+        </div>
+    </form>
+    
+    <p>Еще не зарегистрированы? <a href="{{ url_for('main.participant_register', olympiad_id=olympiad.id) }}">Зарегистрироваться</a></p>
+{% endblock %}

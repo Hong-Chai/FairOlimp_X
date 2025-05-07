@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ olympiad.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .olympiad-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .olympiad-logo {
+            max-width: 100px;
+            max-height: 100px;
+            margin-right: 20px;
+        }
+        .olympiad-info {
+            flex-grow: 1;
+        }
+        .olympiad-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .olympiad-subject {
+            font-size: 16px;
+            color: #666;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .participant-code {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="olympiad-header">
+            {% if olympiad.logo %}
+                <img src="{{ olympiad.logo }}" alt="{{ olympiad.name }}" class="olympiad-logo">
+            {% endif %}
+            <div class="olympiad-info">
+                <div class="olympiad-name">{{ olympiad.name }}</div>
+                <div class="olympiad-subject">{{ olympiad.subject }}</div>
+            </div>
+        </div>
+
+        <div class="flash-messages">
+            {% for message in get_flashed_messages(with_categories=true) %}
+                <div class="flash-message flash-{{ message[0] }}">
+                    {{ message[1] }}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

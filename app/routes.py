@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from . import db
 from app.models import Olympiad, Participant
@@ -6,6 +6,8 @@ from app.forms import (
     OrganizerRegistrationForm,
     OrganizerLoginForm,
     OlympiadSettingsForm,
+    ParticipantRegistrationForm,
+    ParticipantLoginForm,
 )
 
 bp = Blueprint("main", __name__)
@@ -41,6 +43,7 @@ def register_organizer():
         db.session.add(olympiad)
         db.session.commit()
 
+        session['user_type'] = 'organizer'
         login_user(olympiad)
         return redirect(url_for("main.organizer_dashboard"))
 
@@ -56,6 +59,7 @@ def login_organizer():
             organizer_username=form.username.data
         ).first()
         if olympiad and olympiad.check_password(form.password.data):
+            session['user_type'] = 'organizer'
             login_user(olympiad)
             return redirect(url_for("main.organizer_dashboard"))
         flash("Неверные учетные данные!")
@@ -67,12 +71,17 @@ def login_organizer():
 @login_required
 def logout():
     logout_user()
+    session.pop('user_type', None)
     return redirect(url_for("main.login_organizer"))
 
 
 @bp.route("/organizer_dashboard")
 @login_required
 def organizer_dashboard():
+    if session.get('user_type') != 'organizer':
+        logout_user()
+        return redirect(url_for("main.login_organizer"))
+        
     participants = Participant.query.filter_by(olympiad_id=current_user.id).all()
     form = OlympiadSettingsForm(obj=current_user)
     return render_template(
@@ -86,6 +95,10 @@ def organizer_dashboard():
 @bp.route("/olympiad_settings", methods=["POST"])
 @login_required
 def olympiad_settings():
+    if session.get('user_type') != 'organizer':
+        logout_user()
+        return redirect(url_for("main.login_organizer"))
+        
     form = OlympiadSettingsForm()
     if form.validate_on_submit():
         current_user.name = form.name.data
@@ -95,3 +108,93 @@ def olympiad_settings():
         db.session.commit()
         flash("Настройки сохранены")
     return redirect(url_for("main.organizer_dashboard"))
+
+
+# Регистрация участника
+@bp.route("/customlg/<int:olympiad_id>", methods=["GET", "POST"])
+def participant_register(olympiad_id):
+    olympiad = Olympiad.query.get_or_404(olympiad_id)
+    
+    # Создаем список классов из строки с классами олимпиады
+    grades = [grade.strip() for grade in olympiad.grades.split(',') if grade.strip()]
+    
+    form = ParticipantRegistrationForm()
+    form.grade.choices = [(grade, grade) for grade in grades]
+    
+    if form.validate_on_submit():
+        # Проверяем, не зарегистрирован ли уже участник с таким email на эту олимпиаду
+        existing_participant = Participant.query.filter_by(
+            olympiad_id=olympiad_id, 
+            participant_email=form.email.data
+        ).first()
+        
+        if existing_participant:
+            flash("Участник с таким email уже зарегистрирован на эту олимпиаду", "error")
+            return redirect(url_for("main.participant_register", olympiad_id=olympiad_id))
+        
+        participant = Participant(
+            olympiad_id=olympiad_id,
+            participant_name=form.name.data,
+            participant_email=form.email.data,
+            grade=form.grade.data
+        )
+        participant.set_password(form.password.data)
+        
+        db.session.add(participant)
+        db.session.commit()
+        
+        flash("Регистрация успешна! Теперь вы можете войти в систему.", "success")
+        return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))
+    
+    return render_template("participant_register.html", form=form, olympiad=olympiad)
+
+
+# Логин участника
+@bp.route("/customlg/<int:olympiad_id>/login", methods=["GET", "POST"])
+def participant_login(olympiad_id):
+    olympiad = Olympiad.query.get_or_404(olympiad_id)
+    
+    form = ParticipantLoginForm()
+    
+    if form.validate_on_submit():
+        participant = Participant.query.filter_by(
+            olympiad_id=olympiad_id,
+            participant_email=form.email.data
+        ).first()
+        
+        if participant and participant.check_password(form.password.data):
+            session['user_type'] = 'participant'
+            login_user(participant)
+            return redirect(url_for("main.participant_dashboard", olympiad_id=olympiad_id))
+        
+        flash("Неверный email или пароль", "error")
+    
+    return render_template("participant_login.html", form=form, olympiad=olympiad)
+
+
+# Личный кабинет участника
+@bp.route("/customlg/<int:olympiad_id>/dashboard")
+@login_required
+def participant_dashboard(olympiad_id):
+    if session.get('user_type') != 'participant':
+        logout_user()
+        return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))
+    
+    olympiad = Olympiad.query.get_or_404(olympiad_id)
+    
+    # Проверяем, что текущий пользователь - участник этой олимпиады
+    if current_user.olympiad_id != olympiad_id:
+        logout_user()
+        flash("У вас нет доступа к этой олимпиаде", "error")
+        return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))
+    
+    return render_template("participant_dashboard.html", participant=current_user, olympiad=olympiad)
+
+
+# Выход участника
+@bp.route("/customlg/<int:olympiad_id>/logout")
+@login_required
+def participant_logout(olympiad_id):
+    logout_user()
+    session.pop('user_type', None)
+    return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))

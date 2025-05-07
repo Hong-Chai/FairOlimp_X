@@ -1,0 +1,26 @@
+{% extends "participant_base.html" %}
+
+{% block content %}
+    <h2>Личный кабинет участника</h2>
+    
+    <div class="section">
+        <h3>Информация об участнике</h3>
+        <p><strong>ФИО:</strong> {{ participant.participant_name }}</p>
+        <p><strong>Email:</strong> {{ participant.participant_email }}</p>
+        <p><strong>Класс:</strong> {{ participant.grade }}</p>
+        <p><strong>Статус:</strong> {{ participant.status }}</p>
+        {% if participant.score is not none %}
+            <p><strong>Баллы:</strong> {{ participant.score }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="section">
+        <h3>Ваш код участника</h3>
+        <div class="participant-code">{{ participant.participant_code }}</div>
+        <p class="note">Этот код может потребоваться для идентификации вашей работы. Пожалуйста, сохраните его.</p>
+    </div>
+    
+    <div class="section">
+        <a href="{{ url_for('main.participant_logout', olympiad_id=olympiad.id) }}" class="btn">Выйти</a>
+    </div>
+{% endblock %}

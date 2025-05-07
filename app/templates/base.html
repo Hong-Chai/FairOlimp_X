@@ -3,12 +3,44 @@
 <head>
     <title>FairOlymp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        nav {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
     <nav>
-        <a href="{{ url_for('main.organizer_dashboard') }}">Организатор</a>
-        <a href="{{ url_for('main.logout') }}">Выйти из всех аккаунтов</a>
+        {% if current_user.is_authenticated %}
+            {% if session.get('user_type') == 'organizer' %}
+                <a href="{{ url_for('main.organizer_dashboard') }}">Панель организатора</a>
+                <a href="{{ url_for('main.logout') }}">Выйти</a>
+            {% elif session.get('user_type') == 'participant' %}
+                <a href="{{ url_for('main.participant_dashboard', olympiad_id=current_user.olympiad_id) }}">Личный кабинет</a>
+                <a href="{{ url_for('main.participant_logout', olympiad_id=current_user.olympiad_id) }}">Выйти</a>
+            {% endif %}
+        {% else %}
+            <a href="{{ url_for('main.login_organizer') }}">Вход для организаторов</a>
+            <a href="{{ url_for('main.register_organizer') }}">Регистрация организатора</a>
+        {% endif %}
     </nav>
-    {% block content %}{% endblock %}
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
 </body>
 </html>

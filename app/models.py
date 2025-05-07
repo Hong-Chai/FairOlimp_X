@@ -35,7 +35,7 @@ class Olympiad(UserMixin, db.Model):
         return check_password_hash(self.organizer_password_hash, password)
 
 
-class Participant(db.Model):
+class Participant(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     olympiad_id = db.Column(db.Integer, db.ForeignKey("olympiad.id"), nullable=False)
     participant_code = db.Column(
@@ -49,6 +49,7 @@ class Participant(db.Model):
     comments = db.Column(db.Text)
     participant_email = db.Column(db.String(120), nullable=False)
     participant_password_hash = db.Column(db.String(128))
+    participant_name = db.Column(db.String(150))
 
     __table_args__ = (
         UniqueConstraint(
@@ -58,3 +59,6 @@ class Participant(db.Model):
 
     def set_password(self, password):
         self.participant_password_hash = generate_password_hash(password)
+        
+    def check_password(self, password):
+        return check_password_hash(self.participant_password_hash, password)
