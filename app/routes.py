@@ -1,6 +1,6 @@
 import email_validator
 from email_validator import EmailNotValidError
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, abort, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from . import db
 from app.models import Olympiad, Participant
@@ -11,6 +11,8 @@ from app.forms import (
     ParticipantRegistrationForm,
     ParticipantLoginForm,
 )
+import os
+from .funcs.generate_certificate import generate_certificate
 
 bp = Blueprint("main", __name__)
 
@@ -210,7 +212,26 @@ def participant_dashboard(olympiad_id):
         flash("У вас нет доступа к этой олимпиаде", "error")
         return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))
     
-    return render_template("participant_dashboard.html", participant=current_user, olympiad=olympiad)
+    return render_template("participant_dashboard.html", participant=current_user,
+                           custom_link=f"/customlg/{olympiad_id}", olympiad=olympiad)
+
+
+@bp.route("/customlg/<int:olympiad_id>/certificate", methods=["GET", "POST"])
+@login_required
+def certificate_download(olympiad_id):
+    olympiad = Olympiad.query.get_or_404(olympiad_id)
+    if session.get('user_type') != 'participant':
+        logout_user()
+        return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))
+    if current_user.olympiad_id != olympiad_id:
+        logout_user()
+        return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))
+    olymp_con = Olympiad.query.filter(Olympiad.id == current_user.olympiad_id).first()
+    os.remove("app\\funcs\\certificate.pdf")
+    generate_certificate(full_name=current_user.participant_name, olympiad=olymp_con.name,
+                         level=olymp_con.level, grade=current_user.grade)
+    path = "funcs\\certificate.pdf"
+    return send_file(path, as_attachment=True)
 
 
 # Выход участника

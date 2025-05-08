@@ -2,7 +2,12 @@
 
 {% block content %}
     <h2>Личный кабинет участника</h2>
-    
+
+    <div class="section">
+        <h2>Ссылки для вас</h2>
+        <p><strong>Сертификат:</strong> <a href="{{ custom_link }}/certificate" target="_blank">{{ custom_link }}/certificate</a></p>
+    </div>
+
     <div class="section">
         <h3>Информация об участнике</h3>
         <p><strong>ФИО:</strong> {{ participant.participant_name }}</p>
