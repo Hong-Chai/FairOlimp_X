@@ -1,5 +1,3 @@
-import email_validator
-from email_validator import EmailNotValidError
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from . import db
@@ -31,8 +29,8 @@ def register_organizer():
         ).first()
 
         if existing_org:
-            flash("Логин или email уже заняты!", "danger") # при помощи bootstrap делаем предупреждение
-            return render_template("register_organizer.html", form=form) # передаем уже существующую форму
+            flash("Логин или email уже заняты!")
+            return redirect(url_for("main.register_organizer"))
 
         olympiad = Olympiad(
             organizer_username=form.username.data,
@@ -48,12 +46,6 @@ def register_organizer():
         session['user_type'] = 'organizer'
         login_user(olympiad)
         return redirect(url_for("main.organizer_dashboard"))
-    else:
-        if form.email.data:
-            try:
-                email_validator.validate_email(form.email.data) # проверяем соответсвует ли email формату
-            except EmailNotValidError:
-                flash("Ваш email не соответсвует формату *@*.* ", "warning")  # при помощи bootstrap делаем предупреждение
 
     return render_template("register_organizer.html", form=form)
 
@@ -70,8 +62,7 @@ def login_organizer():
             session['user_type'] = 'organizer'
             login_user(olympiad)
             return redirect(url_for("main.organizer_dashboard"))
-        else:
-            flash("Неверные учетные данные!", "danger") # предупреждение при помощи bootstrap
+        flash("Неверные учетные данные!")
     return render_template("login_organizer.html", form=form)
 
 
@@ -138,8 +129,8 @@ def participant_register(olympiad_id):
         ).first()
         
         if existing_participant:
-            flash("Участник с таким email уже зарегистрирован на эту олимпиаду", "danger") # показываем предупреждение при помощи bootstrap
-            return render_template("participant_register.html", form=form, olympiad=olympiad) # возвращаем форму с уже заполненными даннами
+            flash("Участник с таким email уже зарегистрирован на эту олимпиаду", "error")
+            return redirect(url_for("main.participant_register", olympiad_id=olympiad_id))
         
         participant = Participant(
             olympiad_id=olympiad_id,
@@ -154,13 +145,7 @@ def participant_register(olympiad_id):
         
         flash("Регистрация успешна! Теперь вы можете войти в систему.", "success")
         return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))
-    else:
-        if form.email.data:
-            try:
-                email_validator.validate_email(form.email.data) # проверяем соответсвует ли email формату
-            except EmailNotValidError:
-                flash("Ваш email не соответсвует формату *@*.* ", "warning")  # при помощи bootstrap делаем предупреждение
-
+    
     return render_template("participant_register.html", form=form, olympiad=olympiad)
 
 
@@ -182,14 +167,7 @@ def participant_login(olympiad_id):
             login_user(participant)
             return redirect(url_for("main.participant_dashboard", olympiad_id=olympiad_id))
         
-        flash("Неверный email или пароль", "danger")
-
-    else:
-        if form.email.data:
-            try:
-                email_validator.validate_email(form.email.data)
-            except EmailNotValidError:
-                flash("Ваш email не соответсвует формату *@*.* ", "warning")  # при помощи bootstrap делаем предупреждение
+        flash("Неверный email или пароль", "error")
     
     return render_template("participant_login.html", form=form, olympiad=olympiad)
 

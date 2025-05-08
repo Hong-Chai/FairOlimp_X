@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired, Email, Length
 
 class OrganizerRegistrationForm(FlaskForm):
     username = StringField("Логин", validators=[DataRequired()])
-    email = StringField("Email", validators=[DataRequired(), Email()],)
+    email = StringField("Email", validators=[DataRequired(), Email()])
     password = PasswordField("Пароль", validators=[DataRequired()])
     submit = SubmitField("Зарегистрироваться")
 

@@ -2,26 +2,23 @@
 
 {% block content %}
     <h2>Вход для участника</h2>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
     <form method="POST" action="">
         {{ form.hidden_tag() }}
         
         <div class="form-group">
             {{ form.email.label }}
             {{ form.email(class="form-control") }}
+            {% for error in form.email.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
         </div>
         
         <div class="form-group">
             {{ form.password.label }}
             {{ form.password(class="form-control") }}
+            {% for error in form.password.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
         </div>
         
         <div class="form-group">
