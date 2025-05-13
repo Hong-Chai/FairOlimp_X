@@ -11,7 +11,7 @@
 
 <div class="section">
     <h2>Настройки олимпиады</h2>
-    <form method="POST" action="{{ url_for('main.olympiad_settings') }}">
+    <form method="POST" action="{{ url_for('main.olympiad_settings') }}" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         <div class="form-group">
             {{ form.name.label }} {{ form.name(class="form-control") }}
@@ -26,7 +26,27 @@
             {{ form.grades.label }} {{ form.grades(class="form-control") }}
             <small>Например: 5,6,7,8,9,10,11</small>
         </div>
-        <input type="submit" value="Сохранить" class="btn">
+        <div class="form-group">
+            {{ form.logo.label }} {{ form.logo(class="form-control", accept=".jpg,.png") }}
+            <small>Поддерживаются только файлы .png и .jpg!</small>
+        </div>
+        {% if current_user.logo %}
+            <small>На данный момент у вас такой логотип: </small>
+            <img src="{{ url_for('static', filename=fn) }}" alt="На данный момент у вас нет логотипа..."
+                                 class="olympiad-logo">
+        {% else %}
+            <small>На данный момент у вас нет логотипа... </small>
+        {% endif %}
+        <div class="form-group">
+            {{ form.submit(class="btn") }}
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </form>
 </div>
 

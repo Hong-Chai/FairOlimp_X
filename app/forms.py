@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField
+from flask_wtf.file import FileRequired, FileAllowed
+from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField
 from wtforms.validators import DataRequired, Email, Length
 
 
@@ -21,6 +22,12 @@ class OlympiadSettingsForm(FlaskForm):
     subject = StringField("Предмет", validators=[DataRequired()])
     level = StringField("Уровень")
     grades = StringField("Классы (через запятую)", validators=[DataRequired()])
+    logo = FileField('Логотип', validators=[
+        FileRequired(),
+        FileAllowed(['jpg', 'png'], 'Только изображения!')
+    ])
+    submit = SubmitField("Сохранить")
+
 
 
 class ParticipantRegistrationForm(FlaskForm):
