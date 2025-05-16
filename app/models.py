@@ -6,11 +6,24 @@ import datetime
 import uuid
 
 OlympiadStatus = Enum(
-    "draft", "registration", "registration ended", "checking", "appeal", "completed", name="olympiad_status"
+    "draft",
+    "registration",
+    "registration ended",
+    "checking",
+    "appeal",
+    "completed",
+    name="olympiad_status",
 )
 
 ParticipantStatus = Enum(
-    "registered", "nullified", "checked", "appealed", "completed-P", "completed-A", "completed-W", name="participant_status"
+    "registered",
+    "nullified",
+    "checked",
+    "appealed",
+    "completed-P",
+    "completed-A",
+    "completed-W",
+    name="participant_status",
 )
 
 
@@ -27,6 +40,8 @@ class Olympiad(UserMixin, db.Model):
     organizer_username = db.Column(db.String(80), unique=True, nullable=False)
     organizer_email = db.Column(db.String(120), unique=True, nullable=False)
     organizer_password_hash = db.Column(db.String(128))
+    winners_percent = db.Column(db.Float, default=0)
+    awardees_percent = db.Column(db.Float, default=0)
 
     def set_password(self, password):
         self.organizer_password_hash = generate_password_hash(password)
@@ -36,7 +51,14 @@ class Olympiad(UserMixin, db.Model):
 
     def can_change_status_to(self, new_status):
         """Check if the olympiad status can be changed to the new status"""
-        status_order = ["draft", "registration", "registration ended", "checking", "appeal", "completed"]
+        status_order = [
+            "draft",
+            "registration",
+            "registration ended",
+            "checking",
+            "appeal",
+            "completed",
+        ]
         current_index = status_order.index(self.status)
         new_index = status_order.index(new_status)
         return new_index == current_index + 1  # Only allow moving to the next status
@@ -59,6 +81,7 @@ class Participant(UserMixin, db.Model):
     participant_password_hash = db.Column(db.String(128))
     participant_name = db.Column(db.String(150))
     organizer_comment = db.Column(db.Text)  # Added for organizer comments to appeals
+    temp_status = db.Column(db.String(20))
 
     __table_args__ = (
         UniqueConstraint(
