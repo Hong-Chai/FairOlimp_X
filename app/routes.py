@@ -69,7 +69,7 @@ def register_organizer():
             organizer_email=form.email.data,
             name="Новая олимпиада",
             subject="Не указано",
-            grades="",
+            grades="0",
         )
         olympiad.set_password(form.password.data)
         db.session.add(olympiad)
@@ -154,11 +154,29 @@ def olympiad_settings():
         current_user.subject = form.subject.data
         current_user.level = form.level.data
         current_user.grades = form.grades.data
-        logo = form.logo.data
-        filename = secure_filename(logo.filename)
-        path_in_uploads  = str(current_user.id) + "." + filename.split(".")[1]
-        current_user.logo = "logos/" + path_in_uploads
-        logo.save(os.path.join("app/static/logos", path_in_uploads))
+        
+        # Handle logo deletion
+        if form.delete_logo.data and current_user.logo:
+            # Delete the logo file if it exists
+            logo_path = os.path.join("app/static", current_user.logo)
+            if os.path.exists(logo_path):
+                os.remove(logo_path)
+            current_user.logo = None
+            flash("Логотип удален", "success")
+        # Handle logo upload only if a new file is provided
+        elif form.logo.data:
+            logo = form.logo.data
+            filename = secure_filename(logo.filename)
+            path_in_uploads = str(current_user.id) + "." + filename.split(".")[1]
+            
+            # Delete old logo if exists
+            if current_user.logo:
+                old_logo_path = os.path.join("app/static", current_user.logo)
+                if os.path.exists(old_logo_path):
+                    os.remove(old_logo_path)
+                    
+            current_user.logo = "logos/" + path_in_uploads
+            logo.save(os.path.join("app/static/logos", path_in_uploads))
 
         db.session.commit()
         flash("Настройки сохранены", "success")

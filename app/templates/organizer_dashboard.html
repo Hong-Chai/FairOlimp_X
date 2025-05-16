@@ -48,6 +48,9 @@
             <small>На данный момент у вас такой логотип: </small>
             <img src="{{ url_for('static', filename=fn) }}" alt="На данный момент у вас нет логотипа..."
                                  class="olympiad-logo">
+            <div class="form-group">
+                {{ form.delete_logo(class="btn btn-danger btn-sm") }}
+            </div>
         {% else %}
             <small>На данный момент у вас нет логотипа... </small>
         {% endif %}

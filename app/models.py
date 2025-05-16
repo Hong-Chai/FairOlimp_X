@@ -20,7 +20,7 @@ class Olympiad(UserMixin, db.Model):
     subject = db.Column(db.String(100), nullable=False)
     level = db.Column(db.String(50))
     logo = db.Column(db.String(255))  # Путь к логотипу
-    grades = db.Column(db.String(100))  # Классы через запятую: "5,6,7"
+    grades = db.Column(db.String(100), default="0")  # Классы через запятую: "0,5,6,7"
     status = db.Column(OlympiadStatus, default="registration")
     participants = db.relationship("Participant", backref="olympiad")
     # Данные организатора

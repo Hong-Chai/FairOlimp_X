@@ -23,9 +23,9 @@ class OlympiadSettingsForm(FlaskForm):
     level = StringField("Уровень")
     grades = StringField("Классы (через запятую)", validators=[DataRequired()])
     logo = FileField('Логотип', validators=[
-        FileRequired(),
         FileAllowed(['jpg', 'png'], 'Только изображения!')
     ])
+    delete_logo = SubmitField("Удалить логотип")
     submit = SubmitField("Сохранить")
 
 
