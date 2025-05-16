@@ -1,3 +1,5 @@
+import os
+
 import email_validator
 from email_validator import EmailNotValidError
 from flask import (
@@ -11,6 +13,8 @@ from flask import (
     abort,
 )
 from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.utils import secure_filename
+
 from . import db
 from app.models import Olympiad, Participant
 from app.forms import (
@@ -122,6 +126,7 @@ def organizer_dashboard():
         participants=participants,
         custom_link=f"/customlg/{current_user.id}",
         form=form,
+        fn=current_user.logo
     )
 
 
@@ -138,8 +143,16 @@ def olympiad_settings():
         current_user.subject = form.subject.data
         current_user.level = form.level.data
         current_user.grades = form.grades.data
+        logo = form.logo.data
+        filename = secure_filename(logo.filename)
+        path_in_uploads  = str(current_user.id) + "." + filename.split(".")[1]
+        current_user.logo = "logos/" + path_in_uploads
+        logo.save(os.path.join("app/static/logos", path_in_uploads))
+
         db.session.commit()
-        flash("Настройки сохранены")
+        flash("Настройки сохранены", "success")
+    else:
+        flash("Что-то пошло не так! Настройки не были сохранены!", "danger")
     return redirect(url_for("main.organizer_dashboard"))
 
 
@@ -165,8 +178,8 @@ def participant_register(olympiad_id):
                 "Участник с таким email уже зарегистрирован на эту олимпиаду", "danger"
             )  # показываем предупреждение при помощи bootstrap
             return render_template(
-                "participant_register.html", form=form, olympiad=olympiad
-            )  # возвращаем форму с уже заполненными даннами
+                "participant_register.html", form=form, olympiad=olympiad,
+            fn=olympiad.logo)  # возвращаем форму с уже заполненными даннами
 
         participant = Participant(
             olympiad_id=olympiad_id,
@@ -191,8 +204,8 @@ def participant_register(olympiad_id):
                 flash(
                     "Ваш email не соответсвует формату *@*.* ", "warning"
                 )  # при помощи bootstrap делаем предупреждение
-
-    return render_template("participant_register.html", form=form, olympiad=olympiad)
+    return render_template("participant_register.html", form=form, olympiad=olympiad,
+                           fn=olympiad.logo)
 
 
 # Логин участника
@@ -225,7 +238,7 @@ def participant_login(olympiad_id):
                     "Ваш email не соответсвует формату *@*.* ", "warning"
                 )  # при помощи bootstrap делаем предупреждение
 
-    return render_template("participant_login.html", form=form, olympiad=olympiad)
+    return render_template("participant_login.html", form=form, olympiad=olympiad, fn=olympiad.logo)
 
 
 # Личный кабинет участника
@@ -245,8 +258,7 @@ def participant_dashboard(olympiad_id):
         return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))
 
     return render_template(
-        "participant_dashboard.html", participant=current_user, olympiad=olympiad
-    )
+        "participant_dashboard.html", participant=current_user, olympiad=olympiad, fn=olympiad.logo)
 
 
 # Выход участника
