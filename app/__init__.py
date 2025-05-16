@@ -28,10 +28,10 @@ def create_app():
 
     # Initialize database
     with app.app_context():
-        from app import routes
+        from app import routes, open_API
 
         routes.init_app(app)  # Register the blueprint
-
+        open_API.init_app(app) # Register API
         db.create_all()
 
     return app
