@@ -6,11 +6,11 @@ import datetime
 import uuid
 
 OlympiadStatus = Enum(
-    "registration", "checking", "appeal", "completed", name="olympiad_status"
+    "draft", "registration", "registration ended", "checking", "appeal", "completed", name="olympiad_status"
 )
 
 ParticipantStatus = Enum(
-    "registered", "checked", "appealed", "completed", name="participant_status"
+    "registered", "nullified", "checked", "appealed", "completed-P", "completed-A", "completed-W", name="participant_status"
 )
 
 
@@ -20,8 +20,8 @@ class Olympiad(UserMixin, db.Model):
     subject = db.Column(db.String(100), nullable=False)
     level = db.Column(db.String(50))
     logo = db.Column(db.String(255))  # Путь к логотипу
-    grades = db.Column(db.String(100))  # Классы через запятую: "5,6,7"
-    status = db.Column(OlympiadStatus, default="registration")
+    grades = db.Column(db.String(100), default="0")  # Классы через запятую: "0,5,6,7"
+    status = db.Column(OlympiadStatus, default="draft")  # Changed default to draft
     participants = db.relationship("Participant", backref="olympiad")
     # Данные организатора
     organizer_username = db.Column(db.String(80), unique=True, nullable=False)
@@ -33,6 +33,13 @@ class Olympiad(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.organizer_password_hash, password)
+
+    def can_change_status_to(self, new_status):
+        """Check if the olympiad status can be changed to the new status"""
+        status_order = ["draft", "registration", "registration ended", "checking", "appeal", "completed"]
+        current_index = status_order.index(self.status)
+        new_index = status_order.index(new_status)
+        return new_index == current_index + 1  # Only allow moving to the next status
 
 
 class Participant(UserMixin, db.Model):
@@ -47,9 +54,11 @@ class Participant(UserMixin, db.Model):
     work_scan = db.Column(db.String(255))
     score = db.Column(db.Integer)
     comments = db.Column(db.Text)
+    appeal_text = db.Column(db.Text)
     participant_email = db.Column(db.String(120), nullable=False)
     participant_password_hash = db.Column(db.String(128))
     participant_name = db.Column(db.String(150))
+    organizer_comment = db.Column(db.Text)  # Added for organizer comments to appeals
 
     __table_args__ = (
         UniqueConstraint(
@@ -59,6 +68,6 @@ class Participant(UserMixin, db.Model):
 
     def set_password(self, password):
         self.participant_password_hash = generate_password_hash(password)
-        
+
     def check_password(self, password):
         return check_password_hash(self.participant_password_hash, password)

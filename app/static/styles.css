@@ -46,12 +46,12 @@ tr:nth-child(even) {
 }
 
 .btn {
-    padding: 10px 15px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    padding: 5px 7px!important;
+    background-color: #4CAF50!important;
+    color: white!important;
+    border: none!important;
+    border-radius: 4px!important;
+    cursor: pointer!important;
 }
 
 .btn:hover {

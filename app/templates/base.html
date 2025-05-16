@@ -29,6 +29,7 @@
     <nav>
         {% if current_user.is_authenticated %}
             {% if session.get('user_type') == 'organizer' %}
+                <img src="{{url_for('static', filename='logo.png')}}">
                 <a href="{{ url_for('main.organizer_dashboard') }}">Панель организатора</a>
                 <a href="{{ url_for('main.logout') }}">Выйти</a>
             {% elif session.get('user_type') == 'participant' %}

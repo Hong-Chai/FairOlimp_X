@@ -10,6 +10,30 @@
 </div>
 
 <div class="section">
+    <h2>Статус олимпиады: {{ current_user.status }}</h2>
+    
+    {% set status_order = ["draft", "registration", "registration ended", "checking", "appeal", "completed"] %}
+    {% set current_index = status_order.index(current_user.status) %}
+    {% if current_index < 5 %}
+        {% set next_status = status_order[current_index + 1] %}
+        {% set next_status_display = {
+            "draft": "Регистрация",
+            "registration": "Регистрация завершена",
+            "registration ended": "Проверка",
+            "checking": "Апелляция",
+            "appeal": "Завершена"
+        } %}
+        <form method="POST" action="{{ url_for('main.change_olympiad_status', new_status=next_status) }}" onsubmit="return confirm('Вы уверены, что хотите изменить статус олимпиады на {{ next_status_display[current_user.status] }}? Это действие нельзя отменить.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn">Перейти к статусу "{{ next_status_display[current_user.status] }}"</button>
+        </form>
+        <small>Внимание: статусы меняются последовательно!</small>
+    {% else %}
+        <p>Олимпиада завершена.</p>
+    {% endif %}
+</div>
+
+<div class="section">
     <h2>Настройки олимпиады</h2>
     <form method="POST" action="{{ url_for('main.olympiad_settings') }}" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
@@ -34,6 +58,9 @@
             <small>На данный момент у вас такой логотип: </small>
             <img src="{{ url_for('static', filename=fn) }}" alt="На данный момент у вас нет логотипа..."
                                  class="olympiad-logo">
+            <div class="form-group">
+                {{ form.delete_logo(class="btn btn-danger btn-sm") }}
+            </div>
         {% else %}
             <small>На данный момент у вас нет логотипа... </small>
         {% endif %}
@@ -54,19 +81,39 @@
     <h2>Участники ({{ participants|length }})</h2>
     <table>
         <tr>
-            <th>ФИО</th>
-            <th>Email</th>
-            <th>Класс</th>
             <th>Код</th>
+            <th>Класс</th>
             <th>Статус</th>
+            <th>Файл работы</th>
+            <th>Оценка</th>
+            <th>Комментарий</th>
+            <th>Апелляция</th>
+            <th>Действия</th>
         </tr>
         {% for participant in participants %}
         <tr>
-            <td>{{ participant.participant_name }}</td>
-            <td>{{ participant.participant_email }}</td>
-            <td>{{ participant.grade }}</td>
             <td>{{ participant.participant_code }}</td>
+            <td>{{ participant.grade }}</td>
             <td>{{ participant.status }}</td>
+            <td>
+                {% if participant.work_scan %}
+                    <a href="{{ url_for('static', filename=participant.work_scan) }}" target="_blank">Просмотр</a>
+                {% else %}
+                    Нет файла
+                {% endif %}
+            </td>
+            <td>{{ participant.score if participant.score is not none else 'Не оценено' }}</td>
+            <td>{{ participant.comments if participant.comments else '' }}</td>
+            <td>
+                {% if participant.appeal_text %}
+                    <a href="{{ url_for('main.organizer_comment', participant_id=participant.id) }}" title="{{ participant.appeal_text }}">+</a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('main.edit_participant', participant_id=participant.id) }}" class="btn btn-sm">Управление</a>
+            </td>
         </tr>
         {% endfor %}
     </table>

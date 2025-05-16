@@ -9,9 +9,6 @@
         <p><strong>Email:</strong> {{ participant.participant_email }}</p>
         <p><strong>Класс:</strong> {{ participant.grade }}</p>
         <p><strong>Статус:</strong> {{ participant.status }}</p>
-        {% if participant.score is not none %}
-            <p><strong>Баллы:</strong> {{ participant.score }}</p>
-        {% endif %}
     </div>
     
     <div class="section">
@@ -19,6 +16,57 @@
         <div class="participant-code">{{ participant.participant_code }}</div>
         <p class="note">Этот код может потребоваться для идентификации вашей работы. Пожалуйста, сохраните его.</p>
     </div>
+    
+    {% if olympiad.status == "appeal" or olympiad.status == "completed" %}
+        <div class="section">
+            <h3>Результаты проверки</h3>
+            {% if participant.work_scan %}
+                <p><strong>Ваша работа:</strong> <a href="{{ url_for('static', filename=participant.work_scan) }}" target="_blank">Просмотреть</a></p>
+            {% endif %}
+            
+            {% if participant.score is not none %}
+                <p><strong>Баллы:</strong> {{ participant.score }}</p>
+            {% endif %}
+            
+            {% if participant.comments %}
+                <p><strong>Комментарий проверяющего:</strong> {{ participant.comments|nl2br }}</p>
+            {% endif %}
+            
+            {% if olympiad.status == "appeal" and participant.status != "nullified" %}
+                <h3>Апелляция</h3>
+                {% if participant.appeal_text %}
+                    <p><strong>Ваша апелляция:</strong> {{ participant.appeal_text|nl2br }}</p>
+                    
+                    {% if participant.organizer_comment %}
+                        <p><strong>Ответ на апелляцию:</strong> {{ participant.organizer_comment|nl2br }}</p>
+                    {% endif %}
+                {% else %}
+                    <form method="POST" action="{{ url_for('main.submit_appeal', olympiad_id=olympiad.id) }}">
+                        {{ appeal_form.hidden_tag() }}
+                        <div class="form-group">
+                            {{ appeal_form.appeal_text.label }} {{ appeal_form.appeal_text(class="form-control", rows=5) }}
+                        </div>
+                        <div class="form-group">
+                            {{ appeal_form.submit(class="btn") }}
+                        </div>
+                    </form>
+                {% endif %}
+            {% elif olympiad.status == "completed" and participant.appeal_text %}
+                <h3>Апелляция</h3>
+                <p><strong>Ваша апелляция:</strong> {{ participant.appeal_text|nl2br }}</p>
+                
+                {% if participant.organizer_comment %}
+                    <p><strong>Ответ на апелляцию:</strong> {{ participant.organizer_comment|nl2br }}</p>
+                {% endif %}
+            {% endif %}
+            
+            {% if participant.status == "nullified" %}
+                <div class="alert alert-danger">
+                    <p><strong>Внимание:</strong> Ваша работа была дисквалифицирована (оценка 0).</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
     
     <div class="section">
         <a href="{{ url_for('main.participant_logout', olympiad_id=olympiad.id) }}" class="btn">Выйти</a>
