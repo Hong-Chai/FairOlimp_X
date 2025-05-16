@@ -1,0 +1,13 @@
+{% extends 'participant_base.html' %}
+
+{% block content %}
+<div class="section text-center">
+    <h2>Регистрация закрыта</h2>
+    <p>Регистрация на олимпиаду "{{ olympiad.name }}" в данный момент недоступна.</p>
+    <p>Пожалуйста, свяжитесь с организатором для получения дополнительной информации.</p>
+    
+    {% if olympiad.status == "registration ended" or olympiad.status == "checking" or olympiad.status == "appeal" or olympiad.status == "completed" %}
+    <p>Если вы уже зарегистрированы, вы можете <a href="{{ url_for('main.participant_login', olympiad_id=olympiad.id) }}">войти в систему</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}

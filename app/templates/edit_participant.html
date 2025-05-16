@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Управление участником</h1>
+
+<div class="section">
+    <h2>Информация об участнике</h2>
+    <p><strong>Код участника:</strong> {{ participant.participant_code }}</p>
+    <p><strong>Класс:</strong> {{ participant.grade }}</p>
+    <p><strong>Статус:</strong> {{ participant.status }}</p>
+</div>
+
+<div class="section">
+    <h2>Работа участника</h2>
+    {% if participant.work_scan %}
+        <p><a href="{{ url_for('static', filename=participant.work_scan) }}" target="_blank" class="btn btn-sm">Просмотреть работу</a></p>
+    {% else %}
+        {% if current_user.status == 'checking' %}
+            <form method="POST" action="{{ url_for('main.edit_participant', participant_id=participant.id) }}" enctype="multipart/form-data">
+                {{ upload_form.hidden_tag() }}
+                <div class="form-group">
+                    {{ upload_form.work_file.label }} {{ upload_form.work_file(class="form-control", accept=".pdf,.jpg,.png") }}
+                    <small>Поддерживаются только файлы .pdf, .png и .jpg!</small>
+                </div>
+                <div class="form-group">
+                    <button type="submit" name="upload_work" class="btn">Загрузить работу</button>
+                </div>
+            </form>
+        {% else %}
+            <p>Работа не загружена. Загрузка доступна только на этапе проверки.</p>
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="section">
+    <h2>Оценка работы</h2>
+    {% if current_user.status in ['checking', 'appeal'] and participant.status != 'nullified' %}
+        <form method="POST" action="{{ url_for('main.edit_participant', participant_id=participant.id) }}">
+            {{ evaluation_form.hidden_tag() }}
+            <div class="form-group">
+                {{ evaluation_form.score.label }} {{ evaluation_form.score(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ evaluation_form.comments.label }} {{ evaluation_form.comments(class="form-control", rows=5) }}
+            </div>
+            <div class="form-group">
+                <button type="submit" name="evaluate" class="btn">Сохранить оценку</button>
+            </div>
+        </form>
+    {% else %}
+        <p><strong>Баллы:</strong> {{ participant.score if participant.score is not none else 'Не оценено' }}</p>
+        {% if participant.comments %}
+            <p><strong>Комментарий к оценке:</strong> {{ participant.comments|nl2br }}</p>
+        {% endif %}
+        {% if participant.status == 'nullified' %}
+            <div class="alert alert-danger">
+                <p><strong>Внимание:</strong> Участник дисквалифицирован (оценка 0).</p>
+            </div>
+        {% endif %}
+        {% if current_user.status not in ['checking', 'appeal'] %}
+            <p><small>Редактирование оценки доступно только на этапах проверки и апелляции.</small></p>
+        {% endif %}
+    {% endif %}
+</div>
+
+{% if participant.appeal_text %}
+<div class="section">
+    <h2>Апелляция участника</h2>
+    <div class="appeal-text">
+        {{ participant.appeal_text|nl2br }}
+    </div>
+    
+    <h3>Ответ на апелляцию</h3>
+    {% if current_user.status == 'appeal' %}
+        <form method="POST" action="{{ url_for('main.edit_participant', participant_id=participant.id) }}">
+            {{ comment_form.hidden_tag() }}
+            <div class="form-group">
+                {{ comment_form.comment.label }} {{ comment_form.comment(class="form-control", rows=5) }}
+            </div>
+            <div class="form-group">
+                <button type="submit" name="comment" class="btn">Отправить комментарий</button>
+            </div>
+        </form>
+    {% else %}
+        {% if participant.organizer_comment %}
+            <p>{{ participant.organizer_comment|nl2br }}</p>
+        {% else %}
+            <p>Ответ на апелляцию не предоставлен.</p>
+        {% endif %}
+        <p><small>Ответ на апелляцию доступен только на этапе апелляции.</small></p>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="section">
+    <p>Удачной работы, коллега. Оценивайте <b>честно!</b></p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<div class="section">
+    <a href="{{ url_for('main.organizer_dashboard') }}" class="btn">Вернуться к списку участников</a>
+</div>
+{% endblock %}

@@ -62,9 +62,16 @@ class AppealForm(FlaskForm):
     submit = SubmitField("Отправить апелляцию")
 
 
+class OrganizerCommentForm(FlaskForm):
+    comment = TextAreaField("Комментарий к апелляции", validators=[DataRequired()])
+    submit = SubmitField("Отправить комментарий")
+
+
 class OlympiadStatusForm(FlaskForm):
     status = SelectField("Статус олимпиады", choices=[
+        ("draft", "Черновик"),
         ("registration", "Регистрация"),
+        ("registration ended", "Регистрация завершена"),
         ("checking", "Проверка"),
         ("appeal", "Апелляция"),
         ("completed", "Завершена")

@@ -11,6 +11,9 @@
 
 <div class="section">
     <h2>Загрузка файла работы</h2>
+    <div class="alert alert-warning">
+        <strong>Внимание!</strong> Работу можно загрузить только один раз. После загрузки изменить файл будет невозможно.
+    </div>
     <form method="POST" action="{{ url_for('main.upload_work', participant_id=participant.id) }}" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         <div class="form-group">

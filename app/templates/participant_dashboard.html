@@ -29,13 +29,17 @@
             {% endif %}
             
             {% if participant.comments %}
-                <p><strong>Комментарий проверяющего:</strong> {{ participant.comments }}</p>
+                <p><strong>Комментарий проверяющего:</strong> {{ participant.comments|nl2br }}</p>
             {% endif %}
             
-            {% if olympiad.status == "appeal" %}
+            {% if olympiad.status == "appeal" and participant.status != "nullified" %}
                 <h3>Апелляция</h3>
                 {% if participant.appeal_text %}
-                    <p><strong>Ваша апелляция:</strong> {{ participant.appeal_text }}</p>
+                    <p><strong>Ваша апелляция:</strong> {{ participant.appeal_text|nl2br }}</p>
+                    
+                    {% if participant.organizer_comment %}
+                        <p><strong>Ответ на апелляцию:</strong> {{ participant.organizer_comment|nl2br }}</p>
+                    {% endif %}
                 {% else %}
                     <form method="POST" action="{{ url_for('main.submit_appeal', olympiad_id=olympiad.id) }}">
                         {{ appeal_form.hidden_tag() }}
@@ -47,6 +51,19 @@
                         </div>
                     </form>
                 {% endif %}
+            {% elif olympiad.status == "completed" and participant.appeal_text %}
+                <h3>Апелляция</h3>
+                <p><strong>Ваша апелляция:</strong> {{ participant.appeal_text|nl2br }}</p>
+                
+                {% if participant.organizer_comment %}
+                    <p><strong>Ответ на апелляцию:</strong> {{ participant.organizer_comment|nl2br }}</p>
+                {% endif %}
+            {% endif %}
+            
+            {% if participant.status == "nullified" %}
+                <div class="alert alert-danger">
+                    <p><strong>Внимание:</strong> Ваша работа была дисквалифицирована (оценка 0).</p>
+                </div>
             {% endif %}
         </div>
     {% endif %}

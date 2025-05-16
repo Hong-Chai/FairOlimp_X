@@ -11,16 +11,26 @@
 
 <div class="section">
     <h2>Статус олимпиады: {{ current_user.status }}</h2>
-    <form method="POST" action="{{ url_for('main.change_olympiad_status') }}">
-        {{ status_form.hidden_tag() }}
-        <div class="form-group">
-            {{ status_form.status.label }} {{ status_form.status(class="form-control") }}
-        </div>
-        <div class="form-group">
-            {{ status_form.submit(class="btn") }}
-        </div>
-        <small>Внимание: статус можно изменять только вперед!</small>
-    </form>
+    
+    {% set status_order = ["draft", "registration", "registration ended", "checking", "appeal", "completed"] %}
+    {% set current_index = status_order.index(current_user.status) %}
+    {% if current_index < 5 %}
+        {% set next_status = status_order[current_index + 1] %}
+        {% set next_status_display = {
+            "draft": "Регистрация",
+            "registration": "Регистрация завершена",
+            "registration ended": "Проверка",
+            "checking": "Апелляция",
+            "appeal": "Завершена"
+        } %}
+        <form method="POST" action="{{ url_for('main.change_olympiad_status', new_status=next_status) }}" onsubmit="return confirm('Вы уверены, что хотите изменить статус олимпиады на {{ next_status_display[current_user.status] }}? Это действие нельзя отменить.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn">Перейти к статусу "{{ next_status_display[current_user.status] }}"</button>
+        </form>
+        <small>Внимание: статусы меняются последовательно!</small>
+    {% else %}
+        <p>Олимпиада завершена.</p>
+    {% endif %}
 </div>
 
 <div class="section">
@@ -94,17 +104,15 @@
             </td>
             <td>{{ participant.score if participant.score is not none else 'Не оценено' }}</td>
             <td>{{ participant.comments if participant.comments else '' }}</td>
-            <td>{{ participant.appeal_text if participant.appeal_text else '' }}</td>
             <td>
-                {% if current_user.status == 'checking' %}
-                    {% if not participant.work_scan %}
-                        <a href="{{ url_for('main.upload_work', participant_id=participant.id) }}" class="btn btn-sm">Загрузить работу</a>
-                    {% else %}
-                        <a href="{{ url_for('main.evaluate_participant', participant_id=participant.id) }}" class="btn btn-sm">Оценить</a>
-                    {% endif %}
-                {% elif participant.work_scan %}
-                    <a href="{{ url_for('main.evaluate_participant', participant_id=participant.id) }}" class="btn btn-sm">Изменить оценку</a>
+                {% if participant.appeal_text %}
+                    <a href="{{ url_for('main.organizer_comment', participant_id=participant.id) }}" title="{{ participant.appeal_text }}">+</a>
+                {% else %}
+                    -
                 {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('main.edit_participant', participant_id=participant.id) }}" class="btn btn-sm">Управление</a>
             </td>
         </tr>
         {% endfor %}

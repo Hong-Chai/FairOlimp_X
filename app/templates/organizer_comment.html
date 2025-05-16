@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Оценка работы участника</h1>
+<h1>Комментарий к апелляции</h1>
 
 <div class="section">
     <h2>Информация об участнике</h2>
@@ -9,24 +9,34 @@
     <p><strong>Класс:</strong> {{ participant.grade }}</p>
 </div>
 
+{% if participant.work_scan %}
 <div class="section">
     <h2>Работа участника</h2>
-    {% if participant.work_scan %}
-        <p><a href="{{ url_for('static', filename=participant.work_scan) }}" target="_blank">Просмотреть работу</a></p>
-    {% else %}
-        <p>Работа не загружена</p>
+    <p><a href="{{ url_for('static', filename=participant.work_scan) }}" target="_blank">Просмотреть работу</a></p>
+</div>
+{% endif %}
+
+<div class="section">
+    <h2>Оценка</h2>
+    <p><strong>Баллы:</strong> {{ participant.score }}</p>
+    {% if participant.comments %}
+        <p><strong>Комментарий к оценке:</strong> {{ participant.comments }}</p>
     {% endif %}
 </div>
 
 <div class="section">
-    <h2>Оценка работы</h2>
-    <form method="POST" action="{{ url_for('main.evaluate_participant', participant_id=participant.id) }}">
+    <h2>Апелляция участника</h2>
+    <div class="appeal-text">
+        {{ participant.appeal_text }}
+    </div>
+</div>
+
+<div class="section">
+    <h2>Ответ на апелляцию</h2>
+    <form method="POST" action="{{ url_for('main.organizer_comment', participant_id=participant.id) }}">
         {{ form.hidden_tag() }}
         <div class="form-group">
-            {{ form.score.label }} {{ form.score(class="form-control") }}
-        </div>
-        <div class="form-group">
-            {{ form.comments.label }} {{ form.comments(class="form-control", rows=5) }}
+            {{ form.comment.label }} {{ form.comment(class="form-control", rows=5) }}
         </div>
         <div class="form-group">
             {{ form.submit(class="btn") }}
