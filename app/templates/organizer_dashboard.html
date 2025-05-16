@@ -10,6 +10,20 @@
 </div>
 
 <div class="section">
+    <h2>Статус олимпиады: {{ current_user.status }}</h2>
+    <form method="POST" action="{{ url_for('main.change_olympiad_status') }}">
+        {{ status_form.hidden_tag() }}
+        <div class="form-group">
+            {{ status_form.status.label }} {{ status_form.status(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ status_form.submit(class="btn") }}
+        </div>
+        <small>Внимание: статус можно изменять только вперед!</small>
+    </form>
+</div>
+
+<div class="section">
     <h2>Настройки олимпиады</h2>
     <form method="POST" action="{{ url_for('main.olympiad_settings') }}" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
@@ -54,19 +68,41 @@
     <h2>Участники ({{ participants|length }})</h2>
     <table>
         <tr>
-            <th>ФИО</th>
-            <th>Email</th>
-            <th>Класс</th>
             <th>Код</th>
+            <th>Класс</th>
             <th>Статус</th>
+            <th>Файл работы</th>
+            <th>Оценка</th>
+            <th>Комментарий</th>
+            <th>Апелляция</th>
+            <th>Действия</th>
         </tr>
         {% for participant in participants %}
         <tr>
-            <td>{{ participant.participant_name }}</td>
-            <td>{{ participant.participant_email }}</td>
-            <td>{{ participant.grade }}</td>
             <td>{{ participant.participant_code }}</td>
+            <td>{{ participant.grade }}</td>
             <td>{{ participant.status }}</td>
+            <td>
+                {% if participant.work_scan %}
+                    <a href="{{ url_for('static', filename=participant.work_scan) }}" target="_blank">Просмотр</a>
+                {% else %}
+                    Нет файла
+                {% endif %}
+            </td>
+            <td>{{ participant.score if participant.score is not none else 'Не оценено' }}</td>
+            <td>{{ participant.comments if participant.comments else '' }}</td>
+            <td>{{ participant.appeal_text if participant.appeal_text else '' }}</td>
+            <td>
+                {% if current_user.status == 'checking' %}
+                    {% if not participant.work_scan %}
+                        <a href="{{ url_for('main.upload_work', participant_id=participant.id) }}" class="btn btn-sm">Загрузить работу</a>
+                    {% else %}
+                        <a href="{{ url_for('main.evaluate_participant', participant_id=participant.id) }}" class="btn btn-sm">Оценить</a>
+                    {% endif %}
+                {% elif participant.work_scan %}
+                    <a href="{{ url_for('main.evaluate_participant', participant_id=participant.id) }}" class="btn btn-sm">Изменить оценку</a>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>

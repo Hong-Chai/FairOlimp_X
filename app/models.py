@@ -34,6 +34,13 @@ class Olympiad(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.organizer_password_hash, password)
 
+    def can_change_status_to(self, new_status):
+        """Check if the olympiad status can be changed to the new status"""
+        status_order = ["registration", "checking", "appeal", "completed"]
+        current_index = status_order.index(self.status)
+        new_index = status_order.index(new_status)
+        return new_index > current_index
+
 
 class Participant(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -47,6 +54,7 @@ class Participant(UserMixin, db.Model):
     work_scan = db.Column(db.String(255))
     score = db.Column(db.Integer)
     comments = db.Column(db.Text)
+    appeal_text = db.Column(db.Text)
     participant_email = db.Column(db.String(120), nullable=False)
     participant_password_hash = db.Column(db.String(128))
     participant_name = db.Column(db.String(150))
@@ -59,6 +67,6 @@ class Participant(UserMixin, db.Model):
 
     def set_password(self, password):
         self.participant_password_hash = generate_password_hash(password)
-        
+
     def check_password(self, password):
         return check_password_hash(self.participant_password_hash, password)
