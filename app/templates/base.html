@@ -37,6 +37,7 @@
                 <a href="{{ url_for('main.participant_logout', olympiad_id=current_user.olympiad_id) }}">Выйти</a>
             {% endif %}
         {% else %}
+            <img src="{{url_for('static', filename='logo.png')}}">
             <a href="{{ url_for('main.login_organizer') }}">Вход для организаторов</a>
             <a href="{{ url_for('main.register_organizer') }}">Регистрация организатора</a>
         {% endif %}

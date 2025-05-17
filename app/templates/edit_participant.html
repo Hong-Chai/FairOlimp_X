@@ -46,6 +46,7 @@
             <div class="form-group">
                 <button type="submit" name="evaluate" class="btn">Сохранить оценку</button>
             </div>
+            <p>Для дискалификации введите -1</p>
         </form>
     {% else %}
         <p><strong>Баллы:</strong> {{ participant.score if participant.score is not none else 'Не оценено' }}</p>
@@ -93,17 +94,13 @@
 {% endif %}
 
 <div class="section">
-    <p>Удачной работы, коллега. Оценивайте <b>честно!</b></p>
-    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">{{ message }}</div>
             {% endfor %}
         {% endif %}
     {% endwith %}
-</div>
-
-<div class="section">
     <a href="{{ url_for('main.organizer_dashboard') }}" class="btn">Вернуться к списку участников</a>
 </div>
 {% endblock %}
