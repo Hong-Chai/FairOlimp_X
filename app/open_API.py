@@ -39,13 +39,16 @@ def create_certificate(olympiad_id):
     olymp_con = Olympiad.query.filter(Olympiad.id == olympiad_id).first()
     olymp_name = olymp_con.name
 
-    create_certificate_pdf(filename="app/funcs/output/certificate.pdf",
+    if os.path.exists(f"app/funcs/output/certificate_{current_user.id}.pdf"):
+        os.remove(f"app/funcs/output/certificate_{current_user.id}.pdf")
+
+    create_certificate_pdf(filename=f"app/funcs/output/certificate_{current_user.id}.pdf",
                        olympiad_name=olymp_name,
                        participant_name=current_user.participant_name,
                        olympiad_id=olympiad_id,
                        participant_code=current_user.participant_code
                        )
-    path = "funcs\\output\\certificate.pdf"
+    path = f"funcs\\output\\certificate_{current_user.id}.pdf"
     return send_file(path, as_attachment=True)
 
 
@@ -58,24 +61,33 @@ def create_diploma(olympiad_id):
         logout_user()
         return redirect(url_for("main.register_organizer"))
 
+    status_raw = current_user.status
+
+    if status_raw not in ["completed-A", "completed-W"]:
+        return "Вы не являетесь победителем или призёром, поэтому диплом получить не можете..."
+
     name = current_user.participant_name
     grade = current_user.grade
     code = current_user.participant_code
+    status = "Призёр" if status_raw == "completed-A" else "Победитель"
 
     olymp_con = Olympiad.query.filter(Olympiad.id == olympiad_id).first()
     olymp_name = olymp_con.name
     olymp_level = olymp_con.level
 
-    create_diploma_pdf(filename="app/funcs/output/diploma.pdf",
+    if os.path.exists(f"app/funcs/output/diploma_{current_user.id}.pdf"):
+        os.remove(f"app/funcs/output/diploma_{current_user.id}.pdf")
+
+    create_diploma_pdf(filename=f"app/funcs/output/diploma_{current_user.id}.pdf",
                        name=name,
                        participant_code=code,
                        grade=grade,
                        olympiad_name=olymp_name,
                        olympiad_level=olymp_level,
                        date=datetime.date.today(),
-                       status_by_res="POKA_NET"
+                       status_by_res=status
                        )
-    path = "funcs\\output\\diploma.pdf"
+    path = f"funcs\\output\\diploma_{current_user.id}.pdf"
     return send_file(path, as_attachment=True)
 
 @bp.route("/generate_blank/<int:olympiad_id>", methods=["GET", "POST"])
@@ -85,13 +97,19 @@ def create_blank(olympiad_id):
 
     if session.get("user_type") != "organizer":
         code = current_user.participant_code
+        id = current_user.id
     else:
         code = "Здесь будет отображен код участника"
+        id = "from_organizer" + str(current_user.id)
+
+    if os.path.exists(f"app/funcs/output/blank_{id}.pdf"):
+        os.remove(f"app/funcs/output/blank_{id}.pdf")
+
     create_blank_pdf(
-        filename="app/funcs/output/blank.pdf",
+        filename=f"app/funcs/output/blank_{id}.pdf",
         olympiad_id=olympiad_id,
         date=datetime.date.today(),
         participant_code=code
     )
-    path = "funcs\\output\\blank.pdf"
+    path = f"funcs\\output\\blank_{id}.pdf"
     return send_file(path, as_attachment=True)
