@@ -580,3 +580,29 @@ def calculate_rankings():
         )
 
     return redirect(url_for("main.organizer_dashboard"))
+
+
+@bp.route("/api/results/<int:olympiad_id>")
+def results(olympiad_id):
+    olympiad = Olympiad.query.get_or_404(olympiad_id)
+
+    if olympiad.status != "completed":
+        abort(403, description="Результаты доступны только после завершения олимпиады.")
+
+    # словарь, где ключ – класс, значение – список участников данного класса
+    results_by_grade = {}
+    grades = [grade.strip() for grade in olympiad.grades.split(",") if grade.strip()]
+    for grade in grades:
+        participants = (
+            Participant.query.filter_by(olympiad_id=olympiad.id, grade=grade)
+            .filter(Participant.status != "nullified")
+            .all()
+        )
+        participants.sort(
+            key=lambda p: p.score if p.score is not None else 0, reverse=True
+        )
+        results_by_grade[grade] = participants
+
+    return render_template(
+        "results.html", olympiad=olympiad, results_by_grade=results_by_grade
+    )
