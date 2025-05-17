@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Результаты олимпиады: {{ olympiad.name }}</h2>
+  {% for grade, participants in results_by_grade.items() %}
+    <h3>Класс {{ grade }}</h3>
+    <table border="1" cellpadding="5" cellspacing="0">
+      <thead>
+        <tr>
+          <th>ФИО</th>
+          <th>Баллы</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for participant in participants %}
+          <tr>
+            <td>{{ participant.participant_name }}</td>
+            <td>{{ participant.score }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="2">Нет участников для этого класса.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+{% endblock %}

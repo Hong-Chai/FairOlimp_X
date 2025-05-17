@@ -29,7 +29,7 @@
         </form>
         <small>Внимание: статусы меняются последовательно!</small>
     {% else %}
-        <p>Олимпиада завершена.</p>
+        <p>Олимпиада завершена. Дешифрованные списки доступны по <a href="{{ url_for('main.results', olympiad_id=current_user.id) }}" target="_blank">ссылке</a></p>
     {% endif %}
 </div>
 
