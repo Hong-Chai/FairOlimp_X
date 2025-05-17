@@ -1,4 +1,5 @@
 import os
+import math
 
 import email_validator
 from email_validator import EmailNotValidError
@@ -31,6 +32,7 @@ from app.forms import (
     AppealForm,
     OlympiadStatusForm,
     OrganizerCommentForm,
+    RankingForm,
 )
 
 bp = Blueprint("main", __name__)
@@ -142,12 +144,32 @@ def organizer_dashboard():
     form = OlympiadSettingsForm(obj=current_user)
     status_form = OlympiadStatusForm(status=current_user.status)
 
+    # Create ranking form if in appeal status
+    ranking_form = None
+    if current_user.status == "appeal":
+        ranking_form = RankingForm()
+        if hasattr(current_user, "winners_percent"):
+            ranking_form.winners_percent.data = current_user.winners_percent
+        if hasattr(current_user, "awardees_percent"):
+            ranking_form.awardees_percent.data = current_user.awardees_percent
+
+    # Group participants by grade
+    grades = [
+        grade.strip() for grade in current_user.grades.split(",") if grade.strip()
+    ]
+    participants_by_grade = {}
+    for grade in grades:
+        participants_by_grade[grade] = [p for p in participants if p.grade == grade]
+
     return render_template(
         "organizer_dashboard.html",
         participants=participants,
+        participants_by_grade=participants_by_grade,
+        grades=grades,
         custom_link=f"/customlg/{current_user.id}",
         form=form,
         status_form=status_form,
+        ranking_form=ranking_form,
         fn=current_user.logo,
         csrf_token=form.csrf_token._value(),
     )
@@ -217,14 +239,22 @@ def change_olympiad_status(new_status):
         # Update olympiad status
         current_user.status = new_status
 
-        # If moving to completed status, update all participants to completed-P
+        # If moving to completed status, apply the calculated rankings
         if new_status == "completed":
+            # Get all participants except nullified ones
             participants = Participant.query.filter_by(
                 olympiad_id=current_user.id
             ).all()
+
             for participant in participants:
-                if participant.status != "nullified":  # Don't change nullified status
-                    participant.status = "completed-P"
+                if participant.status == "nullified":
+                    continue  # Don't change nullified status
+
+                # Apply temp_status if it exists, otherwise use default
+                if hasattr(participant, "temp_status") and participant.temp_status:
+                    participant.status = participant.temp_status
+                else:
+                    participant.status = "completed-P"  # Default to regular participant
 
         db.session.commit()
         flash(f"Статус олимпиады изменен на {new_status}", "success")
@@ -463,7 +493,7 @@ def edit_participant(participant_id):
         else:
             # Explicitly convert score to integer to ensure proper handling of zero
             score_value = int(evaluation_form.score.data)
-            
+
             # Сохраняем оценку независимо от наличия загруженной работы
             participant.score = score_value
             participant.comments = evaluation_form.comments.data
@@ -519,3 +549,67 @@ def participant_logout(olympiad_id):
     logout_user()
     session.pop("user_type", None)
     return redirect(url_for("main.participant_login", olympiad_id=olympiad_id))
+
+
+@bp.route("/calculate_rankings", methods=["POST"])
+@login_required
+def calculate_rankings():
+    if session.get("user_type") != "organizer":
+        logout_user()
+        return redirect(url_for("main.login_organizer"))
+
+    # Only allow in appeal status
+    if current_user.status != "appeal":
+        flash("Рейтингирование доступно только на этапе апелляции", "danger")
+        return redirect(url_for("main.organizer_dashboard"))
+
+    form = RankingForm()
+    if form.validate_on_submit():
+        winners_percent = form.winners_percent.data
+        awardees_percent = form.awardees_percent.data
+
+        # Store the percentages in the database for later use
+        current_user.winners_percent = winners_percent
+        current_user.awardees_percent = awardees_percent
+        db.session.commit()
+
+        # Calculate rankings for each grade
+        grades = [
+            grade.strip() for grade in current_user.grades.split(",") if grade.strip()
+        ]
+        for grade in grades:
+            # Get all valid participants in this grade (excluding nullified)
+            participants = (
+                Participant.query.filter_by(olympiad_id=current_user.id, grade=grade)
+                .filter(Participant.status != "nullified")
+                .all()
+            )
+
+            # Sort participants by score (highest first)
+            participants.sort(
+                key=lambda p: p.score if p.score is not None else -1, reverse=True
+            )
+
+            total_count = len(participants)
+            if total_count == 0:
+                continue
+
+            # Calculate number of winners and awardees
+            winners_count = int(math.ceil(total_count * winners_percent / 100))
+            awardees_count = int(math.ceil(total_count * awardees_percent / 100))
+
+            # Mark participants temporarily (will be committed on completion)
+            for i, participant in enumerate(participants):
+                if i < winners_count:
+                    participant.temp_status = "completed-W"  # Winner
+                elif i < winners_count + awardees_count:
+                    participant.temp_status = "completed-A"  # Awardee
+                else:
+                    participant.temp_status = "completed-P"  # Regular participant
+        db.session.commit()
+        flash(
+            "Рейтинги рассчитаны. Статусы будут применены при завершении олимпиады.",
+            "success",
+        )
+
+    return redirect(url_for("main.organizer_dashboard"))

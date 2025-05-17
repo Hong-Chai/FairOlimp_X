@@ -1,12 +1,24 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileRequired, FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField, IntegerField, TextAreaField
+from wtforms import (
+    StringField,
+    PasswordField,
+    SubmitField,
+    SelectField,
+    FileField,
+    IntegerField,
+    TextAreaField,
+    FloatField,
+)
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional
 
 
 class OrganizerRegistrationForm(FlaskForm):
     username = StringField("Логин", validators=[DataRequired()])
-    email = StringField("Email", validators=[DataRequired(), Email()],)
+    email = StringField(
+        "Email",
+        validators=[DataRequired(), Email()],
+    )
     password = PasswordField("Пароль", validators=[DataRequired()])
     submit = SubmitField("Зарегистрироваться")
 
@@ -22,9 +34,9 @@ class OlympiadSettingsForm(FlaskForm):
     subject = StringField("Предмет", validators=[DataRequired()])
     level = StringField("Уровень")
     grades = StringField("Классы (через запятую)", validators=[DataRequired()])
-    logo = FileField('Логотип', validators=[
-        FileAllowed(['jpg', 'png'], 'Только изображения!')
-    ])
+    logo = FileField(
+        "Логотип", validators=[FileAllowed(["jpg", "png"], "Только изображения!")]
+    )
     delete_logo = SubmitField("Удалить логотип")
     submit = SubmitField("Сохранить")
 
@@ -44,10 +56,13 @@ class ParticipantLoginForm(FlaskForm):
 
 
 class WorkUploadForm(FlaskForm):
-    work_file = FileField('Файл работы', validators=[
-        FileRequired(),
-        FileAllowed(['pdf', 'jpg', 'png'], 'Только PDF или изображения!')
-    ])
+    work_file = FileField(
+        "Файл работы",
+        validators=[
+            FileRequired(),
+            FileAllowed(["pdf", "jpg", "png"], "Только PDF или изображения!"),
+        ],
+    )
     submit = SubmitField("Загрузить")
 
 
@@ -68,12 +83,34 @@ class OrganizerCommentForm(FlaskForm):
 
 
 class OlympiadStatusForm(FlaskForm):
-    status = SelectField("Статус олимпиады", choices=[
-        ("draft", "Черновик"),
-        ("registration", "Регистрация"),
-        ("registration ended", "Регистрация завершена"),
-        ("checking", "Проверка"),
-        ("appeal", "Апелляция"),
-        ("completed", "Завершена")
-    ], validators=[DataRequired()])
+    status = SelectField(
+        "Статус олимпиады",
+        choices=[
+            ("draft", "Черновик"),
+            ("registration", "Регистрация"),
+            ("registration ended", "Регистрация завершена"),
+            ("checking", "Проверка"),
+            ("appeal", "Апелляция"),
+            ("completed", "Завершена"),
+        ],
+        validators=[DataRequired()],
+    )
     submit = SubmitField("Изменить статус")
+
+
+class RankingForm(FlaskForm):
+    winners_percent = FloatField(
+        "Процент победителей",
+        validators=[
+            DataRequired(),
+            NumberRange(min=0, max=100, message="Процент должен быть от 0 до 100"),
+        ],
+    )
+    awardees_percent = FloatField(
+        "Процент призеров",
+        validators=[
+            DataRequired(),
+            NumberRange(min=0, max=100, message="Процент должен быть от 0 до 100"),
+        ],
+    )
+    submit = SubmitField("Пересчитать рейтинги")

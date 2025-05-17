@@ -107,3 +107,12 @@ a:hover {
     max-height: 100px;
     margin-right: 20px;
 }
+tr.winner {
+    background-color: #d4edda;
+}
+tr.awardee {
+    background-color: #fff3cd;
+}
+tr.participant {
+    background-color: #f8f9fa;
+}
