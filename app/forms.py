@@ -67,7 +67,7 @@ class WorkUploadForm(FlaskForm):
 
 
 class EvaluationForm(FlaskForm):
-    score = IntegerField("Оценка", validators=[DataRequired(), NumberRange(min=0)])
+    score = IntegerField("Оценка", validators=[DataRequired(), NumberRange(min=-1)])
     comments = TextAreaField("Комментарий", validators=[Optional()])
     submit = SubmitField("Сохранить оценку")
 

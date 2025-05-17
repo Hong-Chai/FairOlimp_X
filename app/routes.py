@@ -44,7 +44,7 @@ def init_app(app):
     os.makedirs(os.path.join(app.static_folder, "logos"), exist_ok=True)
     os.makedirs(os.path.join(app.static_folder, "works"), exist_ok=True)
 
-    # Add nl2br filter
+    # Фильтр для корректного отображения текста
     @app.template_filter("nl2br")
     def nl2br_filter(s):
         if s is None:
@@ -69,9 +69,7 @@ def register_organizer():
         ).first()
 
         if existing_org:
-            flash(
-                "Логин или email уже заняты!", "danger"
-            )  # при помощи bootstrap делаем предупреждение
+            flash("Логин или email уже заняты!", "danger")
             return render_template(
                 "register_organizer.html", form=form
             )  # передаем уже существующую форму
@@ -98,9 +96,7 @@ def register_organizer():
                     form.email.data
                 )  # проверяем соответсвует ли email формату
             except EmailNotValidError:
-                flash(
-                    "Ваш email не соответсвует формату *@*.* ", "warning"
-                )  # при помощи bootstrap делаем предупреждение
+                flash("Ваш email не соответсвует формату *@*.* ", "warning")
 
     return render_template("register_organizer.html", form=form)
 
@@ -118,9 +114,7 @@ def login_organizer():
             login_user(olympiad)
             return redirect(url_for("main.organizer_dashboard"))
         else:
-            flash(
-                "Неверные учетные данные!", "danger"
-            )  # предупреждение при помощи bootstrap
+            flash("Неверные учетные данные!", "danger")
     return render_template("login_organizer.html", form=form)
 
 
@@ -264,20 +258,6 @@ def change_olympiad_status(new_status):
     return redirect(url_for("main.organizer_dashboard"))
 
 
-@bp.route("/upload_work/<int:participant_id>", methods=["GET", "POST"])
-@login_required
-def upload_work(participant_id):
-    # Redirect to the new combined edit page
-    return redirect(url_for("main.edit_participant", participant_id=participant_id))
-
-
-@bp.route("/evaluate_participant/<int:participant_id>", methods=["GET", "POST"])
-@login_required
-def evaluate_participant(participant_id):
-    # Redirect to the new combined edit page
-    return redirect(url_for("main.edit_participant", participant_id=participant_id))
-
-
 # Регистрация участника
 @bp.route("/customlg/<int:olympiad_id>", methods=["GET", "POST"])
 def participant_register(olympiad_id):
@@ -285,7 +265,6 @@ def participant_register(olympiad_id):
 
     # Check if olympiad is in registration status
     if olympiad.status != "registration":
-        flash("Регистрация на олимпиаду в данный момент недоступна", "danger")
         return render_template(
             "registration_closed.html", olympiad=olympiad, fn=olympiad.logo
         )
@@ -305,7 +284,7 @@ def participant_register(olympiad_id):
         if existing_participant:
             flash(
                 "Участник с таким email уже зарегистрирован на эту олимпиаду", "danger"
-            )  # показываем предупреждение при помощи bootstrap
+            )
             return render_template(
                 "participant_register.html",
                 form=form,
@@ -367,9 +346,7 @@ def participant_login(olympiad_id):
             try:
                 email_validator.validate_email(form.email.data)
             except EmailNotValidError:
-                flash(
-                    "Ваш email не соответсвует формату *@*.* ", "warning"
-                )  # при помощи bootstrap делаем предупреждение
+                flash("Ваш email не соответсвует формату *@*.* ", "warning")
 
     return render_template(
         "participant_login.html", form=form, olympiad=olympiad, fn=olympiad.logo
@@ -471,7 +448,6 @@ def edit_participant(participant_id):
             file_ext = filename.rsplit(".", 1)[1].lower()
             new_filename = f"{participant.participant_code}.{file_ext}"
 
-            # Save the file
             work_file.save(os.path.join("app/static/works", new_filename))
 
             # Update participant record
@@ -492,7 +468,7 @@ def edit_participant(participant_id):
             )
         else:
             # Explicitly convert score to integer to ensure proper handling of zero
-            score_value = int(evaluation_form.score.data)
+            score_value = evaluation_form.score.data
 
             # Сохраняем оценку независимо от наличия загруженной работы
             participant.score = score_value
@@ -500,9 +476,8 @@ def edit_participant(participant_id):
 
             # Set status based on score only if in checking status
             if current_user.status == "checking":
-                if score_value == 0:
+                if score_value == -1:
                     participant.status = "nullified"
-                    flash("Участник дисквалифицирован (оценка 0)", "warning")
                 else:
                     participant.status = "checked"
 
@@ -535,13 +510,6 @@ def edit_participant(participant_id):
     )
 
 
-@bp.route("/organizer_comment/<int:participant_id>", methods=["GET", "POST"])
-@login_required
-def organizer_comment(participant_id):
-    # Redirect to the new combined edit page
-    return redirect(url_for("main.edit_participant", participant_id=participant_id))
-
-
 # Выход участника
 @bp.route("/customlg/<int:olympiad_id>/logout")
 @login_required
@@ -568,7 +536,6 @@ def calculate_rankings():
         winners_percent = form.winners_percent.data
         awardees_percent = form.awardees_percent.data
 
-        # Store the percentages in the database for later use
         current_user.winners_percent = winners_percent
         current_user.awardees_percent = awardees_percent
         db.session.commit()

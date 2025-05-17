@@ -34,7 +34,7 @@ class Olympiad(UserMixin, db.Model):
     level = db.Column(db.String(50))
     logo = db.Column(db.String(255))  # Путь к логотипу
     grades = db.Column(db.String(100), default="0")  # Классы через запятую: "0,5,6,7"
-    status = db.Column(OlympiadStatus, default="draft")  # Changed default to draft
+    status = db.Column(OlympiadStatus, default="draft")
     participants = db.relationship("Participant", backref="olympiad")
     # Данные организатора
     organizer_username = db.Column(db.String(80), unique=True, nullable=False)
@@ -80,7 +80,7 @@ class Participant(UserMixin, db.Model):
     participant_email = db.Column(db.String(120), nullable=False)
     participant_password_hash = db.Column(db.String(128))
     participant_name = db.Column(db.String(150))
-    organizer_comment = db.Column(db.Text)  # Added for organizer comments to appeals
+    organizer_comment = db.Column(db.Text)
     temp_status = db.Column(db.String(20))
 
     __table_args__ = (
