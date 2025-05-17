@@ -6,7 +6,7 @@ from reportlab.pdfgen import canvas
 
 def create_blank_pdf(filename, participant_code, olympiad_id, date):
 
-    pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('DejaVuSans', 'app/funcs/DejaVuSans.ttf'))
 
     c = canvas.Canvas(filename, pagesize=A4)
     width, height = A4

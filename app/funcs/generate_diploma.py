@@ -6,7 +6,7 @@ from reportlab.pdfgen import canvas
 
 def create_diploma_pdf(filename, name, participant_code, grade, olympiad_name, olympiad_level, date, status_by_res):
     # Регистрируем шрифт с поддержкой кириллицы
-    pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('DejaVuSans', 'app/funcs/DejaVuSans.ttf'))
 
     # Используем альбомную ориентацию
     c = canvas.Canvas(filename, pagesize=landscape(A4))

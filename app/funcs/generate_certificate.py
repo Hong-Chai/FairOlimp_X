@@ -5,7 +5,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 def create_certificate_pdf(filename, participant_name, participant_code, olympiad_name, olympiad_id):
     # Используем шрифт с поддержкой кириллицы
-    pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('DejaVuSans', 'app/funcs/DejaVuSans.ttf'))
 
     c = canvas.Canvas(filename, pagesize=landscape(A4))
     width, height = landscape(A4)
