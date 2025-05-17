@@ -27,58 +27,72 @@ def init_app(app):
     os.makedirs('app/funcs/output', exist_ok=True)
 
 @bp.route("/generate_certificate/<int:olympiad_id>", methods=["GET", "POST"])
-@login_required
 def create_certificate(olympiad_id):
     olympiad = Olympiad.query.get_or_404(olympiad_id)
 
-    if session.get("user_type") != "participant" or not check_acc(current_user.participant_code):
-        logout_user()
-        return redirect(url_for("main.register_organizer"))
-
-
     olymp_con = Olympiad.query.filter(Olympiad.id == olympiad_id).first()
     olymp_name = olymp_con.name
 
-    if os.path.exists(f"app/funcs/output/certificate_{current_user.id}.pdf"):
-        os.remove(f"app/funcs/output/certificate_{current_user.id}.pdf")
+    if session.get("user_type") != "participant":
+        pt_name = "ФИО участника"
+        id_p = f"not_from_participant_with_olymp_id_{olympiad_id}"
+        pt_code = "Здесь будет отображен код участника"
+    else:
+        pt_name = current_user.participant_name
+        id_p = current_user.id
+        pt_code = current_user.participant_code
 
-    create_certificate_pdf(filename=f"app/funcs/output/certificate_{current_user.id}.pdf",
+
+    if os.path.exists(f"app/funcs/output/certificate_{id_p}.pdf"):
+        os.remove(f"app/funcs/output/certificate_{id_p}.pdf")
+
+    create_certificate_pdf(filename=f"app/funcs/output/certificate_{id_p}.pdf",
                        olympiad_name=olymp_name,
-                       participant_name=current_user.participant_name,
+                       participant_name=pt_name,
                        olympiad_id=olympiad_id,
-                       participant_code=current_user.participant_code
+                       participant_code=pt_code
                        )
-    path = f"funcs\\output\\certificate_{current_user.id}.pdf"
+    path = f"funcs\\output\\certificate_{id_p}.pdf"
     return send_file(path, as_attachment=True)
 
 
-@bp.route("/generate_diploma/<int:olympiad_id>", methods=["GET", "POST"])
-@login_required
-def create_diploma(olympiad_id):
-    olympiad = Olympiad.query.get_or_404(olympiad_id)
+@bp.route("/generate_diploma/<pt_code>", methods=["GET", "POST"])
+def create_diploma(pt_code):
+    if not check_acc(pt_code):
+        return "Аккаунта не существует"
 
-    if session.get("user_type") != "participant" or not check_acc(current_user.participant_code):
-        logout_user()
-        return redirect(url_for("main.register_organizer"))
+    status_raw = Participant.query.filter(Participant.participant_code == pt_code).first().status
 
-    status_raw = current_user.status
+    if status_raw not in ["completed-A", "completed-W", "completed-P"]:
+        return "Олимпиада ещё не завершена!"
 
-    if status_raw not in ["completed-A", "completed-W"]:
-        return "Вы не являетесь победителем или призёром, поэтому диплом получить не можете..."
+    if session.get("user_type") != "participant":
+        pt_con = Participant.query.filter(Participant.participant_code == pt_code).first()
+        name = pt_con.participant_name
+        grade = pt_con.grade
+        code = pt_code
+        status = "Призёр" if status_raw == "completed-A" else ("Победитель" if status_raw == "completed-W" else
+                                                               "Участник")
+        ol_id = pt_con.olympiad_id
+        olymp_con = Olympiad.query.filter(Olympiad.id == ol_id).first()
+        olymp_name = olymp_con.name
+        olymp_level = olymp_con.level
+        id_p = f"not_from_participant_with_code_{code}"
+    else:
+        name = current_user.participant_name
+        grade = current_user.grade
+        code = current_user.participant_code
+        status = "Призёр" if status_raw == "completed-A" else ("Победитель" if status_raw == "completed-W" else
+                                                               "Участник")
+        olymp_con = Olympiad.query.filter(Olympiad.id == current_user.olympiad_id).first()
+        olymp_name = olymp_con.name
+        olymp_level = olymp_con.level
+        id_p = current_user.id
 
-    name = current_user.participant_name
-    grade = current_user.grade
-    code = current_user.participant_code
-    status = "Призёр" if status_raw == "completed-A" else "Победитель"
+    if os.path.exists(f"app/funcs/output/diploma_{id_p}.pdf"):
+        os.remove(f"app/funcs/output/diploma_{id_p}.pdf")
 
-    olymp_con = Olympiad.query.filter(Olympiad.id == olympiad_id).first()
-    olymp_name = olymp_con.name
-    olymp_level = olymp_con.level
-
-    if os.path.exists(f"app/funcs/output/diploma_{current_user.id}.pdf"):
-        os.remove(f"app/funcs/output/diploma_{current_user.id}.pdf")
-
-    create_diploma_pdf(filename=f"app/funcs/output/diploma_{current_user.id}.pdf",
+    create_diploma_pdf(filename=f"app/funcs/output/diploma_{id_p}.pdf",
                        name=name,
                        participant_code=code,
                        grade=grade,
@@ -87,20 +101,23 @@ def create_diploma(olympiad_id):
                        date=datetime.date.today(),
                        status_by_res=status
                        )
-    path = f"funcs\\output\\diploma_{current_user.id}.pdf"
+    path = f"funcs\\output\\diploma_{id_p}.pdf"
     return send_file(path, as_attachment=True)
 
-@bp.route("/generate_blank/<int:olympiad_id>", methods=["GET", "POST"])
-@login_required
-def create_blank(olympiad_id):
-    olympiad = Olympiad.query.get_or_404(olympiad_id)
+@bp.route("/generate_blank/<pt_code>", methods=["GET", "POST"])
+def create_blank(pt_code):
+    if not check_acc(pt_code):
+        return "Аккаунта не существует"
 
-    if session.get("user_type") != "organizer":
+    if session.get("user_type") != "participant":
+        pt_con = Participant.query.filter(Participant.participant_code == pt_code).first()
+        code = pt_code
+        id = f"not_from_participant_with_code_{pt_code}"
+        olympiad_id = pt_con.olympiad_id
+    else:
         code = current_user.participant_code
         id = current_user.id
-    else:
-        code = "Здесь будет отображен код участника"
-        id = "from_organizer" + str(current_user.id)
+        olympiad_id = current_user.olympiad_id
 
     if os.path.exists(f"app/funcs/output/blank_{id}.pdf"):
         os.remove(f"app/funcs/output/blank_{id}.pdf")
