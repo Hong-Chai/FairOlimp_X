@@ -126,7 +126,7 @@
                 <td>{{ participant.comments if participant.comments else '' }}</td>
                 <td>
                     {% if participant.appeal_text %}
-                        <a href="{{ url_for('main.organizer_comment', participant_id=participant.id) }}" title="{{ participant.appeal_text }}">+</a>
+                        <a href="{{ url_for('main.edit_participant', participant_id=participant.id) }}" title="{{ participant.appeal_text }}">+</a>
                     {% else %}
                         -
                     {% endif %}
